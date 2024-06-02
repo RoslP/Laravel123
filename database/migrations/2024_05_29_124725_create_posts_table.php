@@ -19,6 +19,8 @@ return new class extends Migration
             $table->unsignedBigInteger('likes')->nullable();    #Храним кол-во лайков. unsigned - означает, что число будет положительным
             $table->boolean('is_published')->default(1);    #по умолчанию 0 - посты не опубликованы
             $table->timestamps();
+
+            $table->softDeletes(); //Создает таблицу где будут храниться все удаленные данные. Нужно в модели использовать use SoftDeletes;
         });
     }
 
