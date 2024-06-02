@@ -1,0 +1,49 @@
+services:
+
+    web:
+        image: nginx
+        volumes:
+            - ./:/var/www #Копируем все файлы проекта в папку /var/www линукс на котором nginx
+            - ./_docker/nginx/conf.d/:/etc/nginx/conf.d/ #Копируме настройки конфига для сервера nginx
+        ports:
+            - 8044:80
+        depends_on:
+            - app  #запускает сервис web, только когда будет нормально запущен сервис php.
+        container_name: nginx
+
+    #Далее подключаю PHP
+    app:
+        build: #Конфигурация сборки Dockerfile
+            context: . #Здесь указывается С_КАКОГО места нужно начинать поиск файла. В данном случае это дирректория проекта
+            dockerfile: _docker/app/Dockerfile #Далее указываем где относительно контекста находится Dockerfile
+        volumes:
+            - ./:/var/www #Добавляю всей файлы для работы с nginx
+        depends_on: #Вкючаю зависимость приложения от базы данных
+            - db
+        container_name: project_app
+
+    db:
+        image: mysql
+        restart: always
+        volumes:
+            - ./tmp/db:/var/lib/mysql #Данная привязка идет к файловой системе Linux. Расположение файлов под конкретную бд можно найти в гугле
+        environment: #Настройки для подключения к базе данных
+            MYSQL_DATABASE: first_db_for_laravel #Создаем базу данных
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - 8031:3306 #Справа стандартный порт для MySql
+        command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci #Устанавливает кодировку utf-8 для базы данных
+        container_name: mysql_db
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        restart: always
+        ports:
+            - 8080:80
+        environment:
+            PMA_HOST: db
+            PMA_PORT: 3306
+            MYSQL_ROOT_PASSWORD: root
+        depends_on:
+            - db
+        container_name: php_my_admin
